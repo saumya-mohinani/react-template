@@ -24,7 +24,12 @@ describe('DetailContainer reducer tests', () => {
 
   it('should ensure that the user data is present and loading = false when SUCCESS_GET_TRACK is dispatched', () => {
     const data = { trackId: 1 };
-    const expectedResult = { ...state, trackData: data, loading: false };
+    const expectedResult = {
+      ...state,
+
+      trackData: data,
+      loading: false
+    };
     expect(
       songContainerReducer(state, {
         type: songContainerTypes.SUCCESS_GET_TRACK,
@@ -40,6 +45,15 @@ describe('DetailContainer reducer tests', () => {
       songContainerReducer(state, {
         type: songContainerTypes.FAILURE_GET_TRACK,
         error
+      })
+    ).toEqual(expectedResult);
+  });
+
+  it('should ensure that the trackData has some data and loading = false when CLEAR_TRACK is dispatched', () => {
+    const expectedResult = { ...state, trackData: {}, loading: false };
+    expect(
+      songContainerReducer(state, {
+        type: songContainerTypes.CLEAR_TRACK
       })
     ).toEqual(expectedResult);
   });
