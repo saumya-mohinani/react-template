@@ -8,12 +8,14 @@ import styled from 'styled-components';
 import { injectIntl } from 'react-intl';
 import { injectSaga } from 'redux-injectors';
 import React, { useEffect } from 'react';
-import { selectSongContainer, selectSongsData, selectSongsError, selectQuery, selectLoading } from './selectors';
-import { songContainerCreators } from './reducer';
-import songContainerSaga from './saga';
+import { useHistory } from 'react-router-dom';
+import { selectSongContainer, selectSongsData, selectSongsError, selectQuery, selectLoading } from '../selectors';
+import { songContainerCreators } from '../reducer';
+import { songContainerSaga } from '../saga';
 import T from '@components/T';
 import LazyImage from '@app/components/LazyImage';
 import For from '@app/components/For';
+import AudioPlayer from '@app/components/AudioPlayer';
 
 const { Search } = Input;
 const { Meta } = Card;
@@ -31,6 +33,15 @@ const SongCard = styled(Card)`
     margin: 1em;
   }
 `;
+
+const Description = styled.div`
+  && {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+
 const SongsContainer = styled.div`
   && {
     display: flex;
@@ -55,20 +66,19 @@ export function SongContainer({
   dispatchSongs,
   dispatchClearSongs,
   intl,
-  songsData = {},
-  songsError = null,
+  songsData,
+  songsError,
   query,
   maxwidth,
   padding,
   loading
 }) {
   useEffect(() => {
-    if (!isEmpty(query) && songsData?.songs?.length) {
+    if (!isEmpty(query)) {
       dispatchSongs(query);
-    } else {
-      dispatchClearSongs();
     }
   }, []);
+
   const handleOnChange = rName => {
     if (!isEmpty(rName)) {
       dispatchSongs(rName);
@@ -76,6 +86,12 @@ export function SongContainer({
       dispatchClearSongs();
     }
   };
+  const history = useHistory();
+
+  const clickHandler = (e, trackId) => {
+    history.push(`/tracks/${trackId}`);
+  };
+
   const debouncedHandleOnChange = debounce(handleOnChange, 200);
 
   const renderResultList = () => {
@@ -90,12 +106,23 @@ export function SongContainer({
                 <SongCard
                   hoverable
                   style={{ width: 240 }}
-                  cover={<LazyImage source={result.artworkUrl100.replace('/100x100bb', '/250x250bb')} />}
+                  cover={
+                    <LazyImage
+                      lowResUrl={result.artworkUrl100.replace('/100x100bb', '/30x30bb')}
+                      highResUrl={result.artworkUrl100.replace('/100x100bb', '/250x250bb')}
+                    />
+                  }
+                  onClick={e => clickHandler(e, result.trackId)}
                 >
                   <Meta
                     title={intl.formatMessage({ id: 'track_name' }, { name: result.trackName })}
-                    description={intl.formatMessage({ id: 'artist_name' }, { name: result.artistName })}
+                    description={[
+                      <Description key={`${result.trackname}-description`}>
+                        {intl.formatMessage({ id: 'artist_name' }, { name: result.artistName })}
+                      </Description>
+                    ]}
                   />
+                  <AudioPlayer source={result.previewUrl} />
                 </SongCard>
               );
             }}
@@ -140,11 +167,13 @@ SongContainer.propTypes = {
   dispatchSongs: PropTypes.func,
   dispatchClearSongs: PropTypes.func,
   intl: PropTypes.object,
-  songsData: PropTypes.shape({
-    results: PropTypes.array,
-    resultCount: PropTypes.number
-  }),
-  songsError: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+  songsData: PropTypes.objectOf(
+    PropTypes.shape({
+      results: PropTypes.array,
+      resultCount: PropTypes.number
+    })
+  ),
+  songsError: PropTypes.string,
   query: PropTypes.string,
   history: PropTypes.object,
   maxwidth: PropTypes.number,
@@ -154,7 +183,9 @@ SongContainer.propTypes = {
 
 SongContainer.defaultProps = {
   maxwidth: 500,
-  padding: 20
+  padding: 20,
+  songsData: [],
+  songsError: null
 };
 
 const mapStateToProps = createStructuredSelector({
@@ -180,3 +211,5 @@ export default compose(
   injectSaga({ key: 'songContainer', saga: songContainerSaga }),
   withConnect
 )(SongContainer);
+
+export const SongContainerTest = compose(injectIntl)(SongContainer);

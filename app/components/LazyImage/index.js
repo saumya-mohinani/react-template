@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ImageArt = styled.img`
   && {
@@ -10,8 +10,8 @@ const ImageArt = styled.img`
 `;
 
 const useProgressiveImg = (lowQualitySrc, highQualitySrc) => {
-  const [src, setSrc] = React.useState(lowQualitySrc);
-  React.useEffect(() => {
+  const [src, setSrc] = useState(lowQualitySrc);
+  useEffect(() => {
     setSrc(lowQualitySrc);
     const img = new Image();
     img.src = highQualitySrc;
@@ -22,13 +22,14 @@ const useProgressiveImg = (lowQualitySrc, highQualitySrc) => {
   return [src, { blur: src === lowQualitySrc }];
 };
 
-const LazyImage = ({ source }) => {
-  const [src] = useProgressiveImg(`https://placeholder.pics/svg/250/DEDEDE/555555/loading...`, source);
+const LazyImage = ({ lowResUrl, highResUrl }) => {
+  const [src] = useProgressiveImg(lowResUrl, highResUrl);
   return <ImageArt src={src} />;
 };
 
 LazyImage.propTypes = {
-  source: PropTypes.string.isRequired
+  lowResUrl: PropTypes.string.isRequired,
+  highResUrl: PropTypes.string.isRequired
 };
 
 export default LazyImage;
